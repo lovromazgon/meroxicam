@@ -33,8 +33,6 @@ func main() {
 	flag.Parse()
 
 	log.Printf("opening connection to Meroxa gRPC endpoint %s\n", *meroxaEndpoint)
-	log.Println(*meroxaUsername)
-	log.Println(*meroxaPassword)
 	exporter, err := NewImageExporter(*meroxaEndpoint, *meroxaTLS, *meroxaUsername, *meroxaPassword, *meroxaStream)
 	if err != nil {
 		log.Fatal(err)
@@ -115,8 +113,9 @@ func NewImageExporter(endpoint string, tls bool, basicAuthUser, basicAuthPass, t
 
 func (e *ImageExporter) Send(img *gocv.Mat) error {
 	resp, err := e.client.Produce(context.Background(), &pb.ProdRq{
-		Topic:   e.topic,
-		Message: img.ToBytes(),
+		KeyUndefined: true,
+		Topic:        e.topic,
+		Message:      img.ToBytes(),
 	})
 	if err != nil {
 		return fmt.Errorf("could not produce: %w", err)
