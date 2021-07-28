@@ -82,48 +82,6 @@ func run(faceRecognizer *FaceRecognizer, exporter *ImageExporter) error {
 	}
 }
 
-type ImageExporter struct {
-	client pb.KafkaPixyClient
-	topic  string
-}
-
-func NewImageExporter(endpoint string, tls bool, basicAuthUser, basicAuthPass, topic string) (*ImageExporter, error) {
-	var opts []grpc.DialOption
-
-	if tls {
-		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(nil)))
-	} else {
-		opts = append(opts, grpc.WithInsecure())
-	}
-
-	opts = append(opts, grpc.WithPerRPCCredentials(&GRPCClientBasicAuth{basicAuthUser, basicAuthPass}))
-
-	conn, err := grpc.Dial(endpoint, opts...)
-	if err != nil {
-		return nil, fmt.Errorf("could not dial grpc: %w", err)
-	}
-
-	client := pb.NewKafkaPixyClient(conn)
-
-	return &ImageExporter{
-		client: client,
-		topic:  topic,
-	}, nil
-}
-
-func (e *ImageExporter) Send(img *gocv.Mat) error {
-	resp, err := e.client.Produce(context.Background(), &pb.ProdRq{
-		KeyUndefined: true,
-		Topic:        e.topic,
-		Message:      img.ToBytes(),
-	})
-	if err != nil {
-		return fmt.Errorf("could not produce: %w", err)
-	}
-	log.Println("Meroxa response:", resp.String())
-	return nil
-}
-
 type FaceRecognizer struct {
 	webcam     *gocv.VideoCapture
 	img        *gocv.Mat
@@ -187,6 +145,48 @@ func (fr *FaceRecognizer) Detect(rate time.Duration) (*gocv.Mat, []image.Rectang
 
 		return fr.img, rects, nil
 	}
+}
+
+type ImageExporter struct {
+	client pb.KafkaPixyClient
+	topic  string
+}
+
+func NewImageExporter(endpoint string, tls bool, basicAuthUser, basicAuthPass, topic string) (*ImageExporter, error) {
+	var opts []grpc.DialOption
+
+	if tls {
+		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(nil)))
+	} else {
+		opts = append(opts, grpc.WithInsecure())
+	}
+
+	opts = append(opts, grpc.WithPerRPCCredentials(&GRPCClientBasicAuth{basicAuthUser, basicAuthPass}))
+
+	conn, err := grpc.Dial(endpoint, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("could not dial grpc: %w", err)
+	}
+
+	client := pb.NewKafkaPixyClient(conn)
+
+	return &ImageExporter{
+		client: client,
+		topic:  topic,
+	}, nil
+}
+
+func (e *ImageExporter) Send(img *gocv.Mat) error {
+	resp, err := e.client.Produce(context.Background(), &pb.ProdRq{
+		KeyUndefined: true,
+		Topic:        e.topic,
+		Message:      img.ToBytes(),
+	})
+	if err != nil {
+		return fmt.Errorf("could not produce: %w", err)
+	}
+	log.Println("Meroxa response:", resp.String())
+	return nil
 }
 
 type GRPCClientBasicAuth struct {
