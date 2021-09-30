@@ -10,9 +10,10 @@ Meroxicam needs [OpenCV 4](https://opencv.org/) installed, you can do this on Ma
 Build the project with `make build` and run it with:
 ```
 meroxa create endpoint grpc-endpoint --protocol grpc --stream resource-2-499379-public.accounts
-USER=$(meroxa list endpoints --json | jq -r '.[] | select(.name == "grpc-endpoint") | .basic_auth_username')
-PASS=$(meroxa list endpoints --json | jq -r '.[] | select(.name == "grpc-endpoint") | .basic_auth_password')
-STREAM=$(meroxa list endpoints --json | jq -r '.[] | select(.name == "grpc-endpoint") | .stream')
+ENDPOINT="my-grpc-endpoint-name"
+USER=$(meroxa endpoints list --json | jq -r ".[] | select(.name == \"$ENDPOINT\") | .basic_auth_username")
+PASS=$(meroxa endpoints list --json | jq -r ".[] | select(.name == \"$ENDPOINT\") | .basic_auth_password")
+STREAM=$(meroxa endpoints list --json | jq -r ".[] | select(.name == \"$ENDPOINT\") | .stream")
 ./meroxicam -meroxa.username=$USER -meroxa.password=$PASS -meroxa.stream=$STREAM
 ```
 
